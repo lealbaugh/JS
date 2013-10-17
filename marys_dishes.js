@@ -1,4 +1,7 @@
-var dishheight = 10;
+var dishheight = 7;
+var dishwidth = 50;
+var dishvertspacing = 3;
+var dishhorspacing = 10;
 
 var canvas;
 var ctx;
@@ -19,7 +22,7 @@ var StackView = function(stack, ctx) {
    stack.bind("push", function(x) {
        drawOps.push(function() { 
         ctx.fillStyle= x.color;
-        ctx.fillRect(x.x, x.y, 10, 100); });
+        ctx.fillRect(x.x, x.y, dishwidth, dishheight); });
    }); //we're pushing a function onto Stack's bindings array which will push "drawing a rectangle" onto StackView's drawOps array 
 
    this.draw = function() {
@@ -35,8 +38,8 @@ var Stack = function(xposition, ctx) {
    var x = xposition;
 
    this.push = function(item) {
-       item.x=this.x || 20;
-       item.y=canvas.height-(dishheight*array.length);
+       item.x= x || 20;
+       item.y= canvas.height-((dishheight+dishvertspacing)*array.length);
        array.push(item);
        bindings["push"].forEach(function(x) {
            x(item);
@@ -59,7 +62,7 @@ Stack.prototype = {   //we don't actually need to put anything in the prototype 
 var Dish = function(number, color, x, y){
   this.x = x;
   this.y = y;
-  this.color = color;
+  this.color = '#'+Math.floor(Math.random()*16777215).toString(16);;
   this.number = number;
 
 }
@@ -80,11 +83,19 @@ function main(){
   addEventListener('click', mouseClicked, false);
 
 
-  mainstack = new Stack(10, ctx);
+  mainstack = new Stack(dishhorspacing, ctx);
   mainstackviewer = new StackView(mainstack, ctx);
+
+  secondstack = new Stack((2*dishhorspacing)+dishwidth, ctx);
+  secondstackviewer = new StackView(secondstack, ctx);
+
 
   for (var i = 0; i <10; i++) {
     mainstack.push(new Dish(i, 'blue', 10, 10));
+  }
+
+  for (var i = 0; i <5; i++) {
+    secondstack.push(new Dish(i, 'blue', 10, 10));
   }
 
 
@@ -103,12 +114,10 @@ function gameLoop(){
 
 function draw(){
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'red';
-  ctx.fillRect(mouseX,mouseY,10,10);
   ctx.drawImage(playerImg, mouseX, mouseY);
 
   mainstackviewer.draw();
-
+  secondstackviewer.draw();
 }
 
 
@@ -122,6 +131,10 @@ function  mouseMoved(e) {
 function  mouseClicked(e) {
     mouseX = e.layerX;
     mouseY = e.layerY;
+    if (mouseX<100){
+      secondstack.push(mainstack.pop());
+    }
+    else mainstack.push(new Dish(10, 'blue', 10, 10));
 }
 
 
