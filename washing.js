@@ -1,7 +1,11 @@
 var plateImg = new Image();
-plateImg.src = 'http://placekitten.com/g/200/200';
+plateImg.src = 'dish.png';
 var cursor = new Image();
 cursor.src = 'cursor.png';
+var dirtImg = new Image();
+dirtImg.src = 'dirt.png';
+var eraser = new Image();
+eraser.src = 'eraser.png';
 
 mouseX = -10;
 mouseY = -10;
@@ -18,6 +22,11 @@ function initialize(){
   frontcanvas.width = 600;
   frontcanvas.height = 300;
 
+  middlecanvas = document.getElementById('middle-canvas');
+  middlectx = middlecanvas.getContext("2d");
+  middlecanvas.width = 600;
+  middlecanvas.height = 300;
+
   backcanvas = document.getElementById('back-canvas');
   backctx = backcanvas.getContext("2d");
   backcanvas.width = 600;
@@ -27,7 +36,9 @@ function initialize(){
   addEventListener('click', mouseClicked, false);
 
 backctx.drawImage(plateImg, backcanvas.width/2-plateImg.width/2, backcanvas.height/2-plateImg.height/2);
-frontctx.fillRect(0,0,frontcanvas.width,frontcanvas.height);
+middlectx.drawImage(dirtImg, middlecanvas.width/2-dirtImg.width/2, middlecanvas.height/2-dirtImg.height/2);
+
+ // middlectx.fillRect(backcanvas.width/2-plateImg.width/2, backcanvas.height/2-plateImg.height/2, plateImg.width, plateImg.height);
 
 
   
@@ -43,8 +54,11 @@ function gameLoop(){
 
 
 function draw(){
-  frontctx.globalCompositeOperation = "destination-out";
-  frontctx.drawImage(cursor, mouseX, mouseY);
+  middlectx.globalCompositeOperation = "destination-out";
+  middlectx.drawImage(eraser, mouseX-eraser.width/2, mouseY-eraser.width/2);
+
+  frontctx.clearRect(0, 0, middlecanvas.width, middlecanvas.height);
+  frontctx.drawImage(cursor, mouseX-cursor.width/2, mouseY-cursor.width/2);
 
 //  frontctx.clearRect(mouseX, mouseY, 10, 10)
 
