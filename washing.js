@@ -1,22 +1,31 @@
-var plateImg = new Image();
-plateImg.src = 'dish.png';
+var plate = new Image();
+plate.src = 'dish.png';
 var cursor = new Image();
 cursor.src = 'cursor.png';
-var dirtImg = new Image();
-dirtImg.src = 'dirt.png';
+var dirt = new Image();
+dirt.src = 'dirt.png';
 var eraser = new Image();
 eraser.src = 'eraser.png';
+
+
+starlevels = ["gold-star.png", "silver-star.png", "blue-star.png", "no-star.png"]
+var star = new Image();
+star.src = "no-star.png";
 
 mouseX = -10;
 mouseY = -10;
 
-function main(){
+cleanarea=130;
+
+var progress = 200000;
+
+function main() {
   initialize();
   gameLoop();   //yeah, oh hey, that
 }
 
 
-function initialize(){
+function initialize() {
   frontcanvas = document.getElementById('front-canvas');
   frontctx = frontcanvas.getContext("2d");
   frontcanvas.width = 600;
@@ -35,36 +44,50 @@ function initialize(){
   addEventListener('mousemove', mouseMoved, false);
   addEventListener('click', mouseClicked, false);
 
-backctx.drawImage(plateImg, backcanvas.width/2-plateImg.width/2, backcanvas.height/2-plateImg.height/2);
-middlectx.drawImage(dirtImg, middlecanvas.width/2-dirtImg.width/2, middlecanvas.height/2-dirtImg.height/2);
+  backctx.drawImage(plate, backcanvas.width/2-plate.width/2, backcanvas.height/2-plate.height/2);
+  middlectx.drawImage(dirt, middlecanvas.width/2-dirt.width/2, middlecanvas.height/2-dirt.height/2);
 
- // middlectx.fillRect(backcanvas.width/2-plateImg.width/2, backcanvas.height/2-plateImg.height/2, plateImg.width, plateImg.height);
+//  middlectx.fillRect(middlecanvas.width/2-cleanarea, middlecanvas.height/2-cleanarea, 2*cleanarea, 2*cleanarea);
 
-
-  
 }
 
 
-function gameLoop(){
+function gameLoop() {
 //  processPlayerInput(); //right now we're just doing event handling; later we'll add some plates on a timer
 //  update GameLogic();
   draw();
+  
   setTimeout(gameLoop, 25);
 }
 
 
-function draw(){
-  middlectx.globalCompositeOperation = "destination-out";
+function draw() {
+  middlectx.globalCompositeOperation = "destination-out";   //destination-out mode subtracts the source from the destination
   middlectx.drawImage(eraser, mouseX-eraser.width/2, mouseY-eraser.width/2);
 
-  frontctx.clearRect(0, 0, middlecanvas.width, middlecanvas.height);
+  frontctx.clearRect(0, 0, middlecanvas.width, middlecanvas.height);  //clear the screen so cursor is updated
   frontctx.drawImage(cursor, mouseX-cursor.width/2, mouseY-cursor.width/2);
 
-//  frontctx.clearRect(mouseX, mouseY, 10, 10)
+  frontctx.drawImage(star, frontcanvas.width-star.width, 0);
+}
 
-  // ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // ctx.drawImage(plateImg, canvas.width/2-plateImg.width/2, canvas.height/2-plateImg.height/2)
 
+
+function checkForBlankness(context, canvas) {
+  var dirtypixels = 0;
+  var pixels = middlectx.getImageData(middlecanvas.width/2-cleanarea, middlecanvas.height/2-cleanarea, 2*cleanarea, 2*cleanarea).data;
+  var pixellength = pixels.length;
+  for (var i =0; i<pixellength; i+=4) {
+    if(pixels[i+3] !== 0) { //i+3 should catch the indices of the alpha value
+      dirtypixels+=1;
+      }
+  }
+  return dirtypixels;
+}
+
+function showpixel() {
+  var pixels = middlectx.getImageData(0,0,middlecanvas.width, middlecanvas.height);
+  return pixels;
 }
 
 
@@ -78,5 +101,16 @@ function  mouseClicked(e) {
     // console.log("click");
     mouseX = e.pageX - frontcanvas.offsetLeft;
     mouseY = e.pageY - frontcanvas.offsetTop;
+    
+    console.log("checking...");
+    progress = checkForBlankness(middlectx, middlecanvas);
+    console.log("There are "+progress+" dirty pixels.");
+    if (progress<=10) star.src = "gold-star.png";
+    else if (progress<=100) star.src = "silver-star.png";
+    else if (progress<=3000) star.src = "blue-star.png";
+    else star.src = "no-star.png";
+
+
+  
 
 }
