@@ -1,4 +1,4 @@
-//Game settings, globals
+//Game settings, globals------------------------------------------------
 
 var canvas;
 var ctx;
@@ -10,22 +10,31 @@ var mouseY = 0;
 var carrying = false;
 var carried;
 
-var numberofstacks = 3;
+var numberofstacks = 4;
 var dishheight = 7;
-var dishwidth = 50;
+var dishwidth = 125;
 var dishvertspacing = 3;
 var dishhorspacing = 10;
 
+var dishside = new Image();
+dishside.src = "dishside.png";
+var smalldish = new Image();
+smalldish.src = "smalldish.png";
+
+var backgroundcolor = "#D2E4FC";
+var bubblecolor = "#A1C820";
+var textcolor = "#333333";
 
 
-//Object definitions
+
+//Object definitions------------------------------------------------
 
 var StackView = function(stack, ctx) {
    var drawOps = [];
    stack.bind("push", function(x) {
-       drawOps.push(function() { 
-        ctx.fillStyle= x.color;
-        ctx.fillRect(x.x, x.y, dishwidth, dishheight); 
+       drawOps.push(function() { //whatever is here will be how a dish is drawn
+        ctx.drawImage(dishside, x.x, x.y-dishside.height/2);
+        wordBubble(x.number, ctx, x.x+dishside.width, x.y-dishside.height);
       });
    }); //we're pushing a function onto Stack's bindings array which will push "drawing a rectangle" onto StackView's drawOps array 
 
@@ -49,19 +58,12 @@ var Stack = function(xposition, ctx) {
      item.x= this.x || 20;
      item.y= canvas.height-((dishheight+dishvertspacing)*(array.length+1));
      array.push(item);
-
-        for (var stack in stacks){
-          for (var i=0; i<stacks[stack].length(); i++){
-            console.log(stacks[stack].all()[i].color);
-          }     
-        }
-
      bindings["push"].forEach(function(x) {
          x(item);
      });
   };
   this.pop = function() {
-      bindings["pop"].forEach(function(x) { //apparently this is not really necessary? unclear
+      bindings["pop"].forEach(function(x) {
          x();
      });
      return array.pop();
@@ -87,13 +89,37 @@ Stack.prototype = {   //we don't actually need to put anything in the prototype 
 };
 
 
+function wordBubble(saying, ctx, x, y) {
+  ctx.fillStyle = bubblecolor;
+  roundRect(ctx, x, y, 22, 12);
+  ctx.fill();
+  ctx.fillStyle = textcolor;
+  ctx.fillText(saying, x+9, y);
+
+}
+
+function roundRect(ctx, x, y, width, height, radius) {
+  if (typeof radius === "undefined") {
+    radius = 5;
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();      
+}
 
 
 var Dish = function(number, color, x, y){
   this.x = x;
   this.y = y;
-  this.color = (Math.random().toString(16) + '000000').slice(2, 8);
-  //['red','blue','green','cyan','orange','black','purple','yellow'][Math.floor(Math.random()*8)]
+  this.color = "#ffffff";
   this.number = number;
 
 }
@@ -101,7 +127,7 @@ var Dish = function(number, color, x, y){
 
 
 
-//Game functions
+//Game functions------------------------------------------------
 
 function main(){
   initialize();
@@ -115,18 +141,21 @@ function initialize(){
   canvas.width = 600;
   canvas.height = 300;
 
+  ctx.font = '400 10px Bitter';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'center';
+
   addEventListener('mousemove', mouseMoved, false);
   addEventListener('click', mouseClicked, false);
 
-  dishwidth = (canvas.width-(numberofstacks*dishhorspacing))/numberofstacks;
+  dishwidth = (canvas.width-((numberofstacks+1)*dishhorspacing))/numberofstacks;
   stacks = {};
   for (var i = 1; i<=numberofstacks; i++) {
-    console.log((i*dishhorspacing)+((i-1)*dishwidth))
     stacks["stack"+i] = new Stack((i*dishhorspacing)+((i-1)*dishwidth), ctx) //cleverly assign a name using string addition!
   }
 
 
-  for (var i = 0; i <2; i++) {
+  for (var i = 0; i <5; i++) {
     stacks.stack1.push(new Dish(i, 'blue', 10, 10));    //let's do this with "for...in" in the next iteration
   }
 
@@ -145,17 +174,20 @@ function gameLoop(){
 
 
 function draw(){
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  //ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle= backgroundcolor;
+  ctx.fillRect(0,0,canvas.width, canvas.height);
 
   for (var thisstack in stacks){    //go through and draw all the stacks
       stacks[thisstack].draw();
     }
 
   if (carrying){        //if the mouse cursor should be a plate
-    ctx.fillStyle = carried.color;
-    ctx.fillRect(mouseX,mouseY, dishwidth,dishwidth);
+    ctx.drawImage(smalldish, mouseX-smalldish.width/2, mouseY-smalldish.height/2);
+    wordBubble(carried.number, ctx, mouseX+smalldish.width/2, mouseY-smalldish.height/2);
   }
 }
+
 
 
 function  mouseMoved(e) {     //e is the event handed to us
@@ -165,7 +197,7 @@ function  mouseMoved(e) {     //e is the event handed to us
 
 
 function  mouseClicked(e) {
-    console.log("click");
+    // console.log("click");
     mouseX = e.pageX - canvas.offsetLeft;
     mouseY = e.pageY - canvas.offsetTop;
     for (var thisstack in stacks){
