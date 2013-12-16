@@ -1,49 +1,32 @@
-//Images
-var dishside = new Image();
-dishside.src = "dishside.png";
-var smalldish = new Image();
-smalldish.src = "smalldish.png";
-var plate = new Image();
-plate.src = 'dish.png';
-var cursor = new Image();
-cursor.src = 'cursor.png';
-var dirt = new Image();
-dirt.src = 'dirt.png';
-var eraser = new Image();
-eraser.src = 'eraser.png';
-var tabletop = new Image();
-tabletop.src = 'tabletop.png';
-var sink = new Image();
-sink.src = 'sink.png';
+//Game settings, globals------------------------------------------------
 
-starlevels = ["gold-star.png", "silver-star.png", "blue-star.png", "no-star.png"]
-var star = new Image();
-star.src = "no-star.png";
+var canvas;
+var ctx;
 
+var keysDown;
+var mouseX = 0;
+var mouseY = 0;
 
-//Settings
+var carrying = false;
+var carried;
+
 var numberofstacks = 4;
 var dishheight = 7;
 var dishwidth = 125;
 var dishvertspacing = 3;
 var dishhorspacing = 10;
 
+var dishside = new Image();
+dishside.src = "dishside.png";
+var smalldish = new Image();
+smalldish.src = "smalldish.png";
+
 var backgroundcolor = "#D2E4FC";
 var bubblecolor = "#A1C820";
 var textcolor = "#333333";
 
-
-mouseX = -10;
-mouseY = -10;
-var carrying = false;
-var carried;
-
-cleanarea=130;
-
 var dishessofar = 0;
 var startingdishes = 6;
-
-var progress = 200000;
 
 
 
@@ -147,16 +130,15 @@ var Dish = function(number, color, x, y){
 
 
 
+//Game functions------------------------------------------------
 
-
-//Game loops------------------------------------
-function main() {
+function main(){
   initialize();
   gameLoop();   //yeah, oh hey, that
 }
 
 
-function initialize() {
+function initialize(){
   canvas = document.getElementById('visible-canvas');
   ctx = canvas.getContext("2d");
   canvas.width = 600;
@@ -166,48 +148,25 @@ function initialize() {
   ctx.textBaseline = 'top';
   ctx.textAlign = 'center';
 
-  frontcanvas = document.getElementById('front-canvas');
-  frontctx = frontcanvas.getContext("2d");
-  frontcanvas.width = 600;
-  frontcanvas.height = 300;
-
-  middlecanvas = document.getElementById('middle-canvas');
-  middlectx = middlecanvas.getContext("2d");
-  middlecanvas.width = 600;
-  middlecanvas.height = 300;
-
-  backcanvas = document.getElementById('back-canvas');
-  backctx = backcanvas.getContext("2d");
-  backcanvas.width = 600;
-  backcanvas.height = 300;
-
   addEventListener('mousemove', mouseMoved, false);
   addEventListener('click', mouseClicked, false);
   addEventListener('keypress', addDish, false);
 
-  // backctx.fillStyle= backgroundcolor;
-  // backctx.fillRect(0,0,canvas.width, canvas.height);
-  backctx.drawImage(sink, 0, 0);
-
-
-
-
-  //initialize stacks and dishes
   dishwidth = (canvas.width-((numberofstacks+1)*dishhorspacing))/numberofstacks;
   stacks = {};
   for (var i = 1; i<=numberofstacks; i++) {
     stacks["stack"+i] = new Stack((i*dishhorspacing)+((i-1)*dishwidth), ctx) //cleverly assign a name using string addition!
   }
 
+
   for (var i = 0; i <startingdishes; i++) {
     stacks.stack1.push(new Dish(dishessofar, 'blue', 10, 10));    //let's do this with "for...in" in the next iteration
     dishessofar += 1;
   }
-
 }
 
 
-function gameLoop() {
+function gameLoop(){
 //  processPlayerInput(); //right now we're just doing event handling; later we'll add some plates on a timer
 //  update GameLogic();
   draw();
@@ -215,63 +174,21 @@ function gameLoop() {
 }
 
 
-function draw() {
+function draw(){
+  //ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle= backgroundcolor;
   ctx.fillRect(0,0,canvas.width, canvas.height);
-  ctx.drawImage(tabletop, 0, canvas.height-tabletop.height);
-
-  frontctx.clearRect(0, 0, middlecanvas.width, middlecanvas.height);  //clear the screen so cursor is updated
 
   for (var thisstack in stacks){    //go through and draw all the stacks
       stacks[thisstack].draw();
     }
 
-  var secondcanvasmouseY = mouseY-canvas.height;
-  
   if (carrying){        //if the mouse cursor should be a plate
-      ctx.drawImage(smalldish, mouseX-smalldish.width/2, mouseY-smalldish.height/2);
-      wordBubble(carried.number, ctx, mouseX+smalldish.width/2, mouseY-smalldish.height/2);
-
-      frontctx.drawImage(smalldish, mouseX-smalldish.width/2, secondcanvasmouseY-smalldish.height/2);
-      wordBubble(carried.number, frontctx, mouseX+smalldish.width/2, secondcanvasmouseY-smalldish.height/2);
-    }
-
-  else {
-    middlectx.globalCompositeOperation = "destination-out";   //destination-out mode subtracts the source from the destination
-    middlectx.drawImage(eraser, mouseX-eraser.width/2, secondcanvasmouseY-eraser.width/2);
-
-    frontctx.drawImage(cursor, mouseX-cursor.width/2, secondcanvasmouseY-cursor.width/2);
-    
+    ctx.drawImage(smalldish, mouseX-smalldish.width/2, mouseY-smalldish.height/2);
+    wordBubble(carried.number, ctx, mouseX+smalldish.width/2, mouseY-smalldish.height/2);
   }
-
-  frontctx.drawImage(star, frontcanvas.width-star.width, 0);
 }
 
-
-
-
-
-
-
-
-//Update-related functions---------------------------------------------
-
-function checkForBlankness(context, canvas) {
-  var dirtypixels = 0;
-  var pixels = middlectx.getImageData(middlecanvas.width/2-cleanarea, middlecanvas.height/2-cleanarea, 2*cleanarea, 2*cleanarea).data;
-  var pixellength = pixels.length;
-  for (var i =0; i<pixellength; i+=4) {
-    if(pixels[i+3] !== 0) { //i+3 should catch the indices of the alpha value
-      dirtypixels+=1;
-      }
-  }
-  return dirtypixels;
-}
-
-function showpixel() {
-  var pixels = middlectx.getImageData(0,0,middlecanvas.width, middlecanvas.height);
-  return pixels;
-}
 
 
 function  mouseMoved(e) {     //e is the event handed to us
@@ -281,59 +198,22 @@ function  mouseMoved(e) {     //e is the event handed to us
 
 
 function  mouseClicked(e) {
-  // console.log("click");
-  mouseX = e.pageX - canvas.offsetLeft;
-  mouseY = e.pageY - canvas.offsetTop;
-  
-  if(carrying) dropDish();
-
-  else if(mouseY>canvas.height) {
-    awardStar();
-  }
-
-  else {
-    takeDish();
-  }
-
-}
-
-function takeDish() {
-  for (var thisstack in stacks){
-    if(mouseX>stacks[thisstack].x && mouseX<(stacks[thisstack].x+dishwidth)){   //if we're in the horizontal zone of a stack
-        carried = stacks[thisstack].pop();
-        carrying = true;
-    }
-  }  
-}
-
-function dropDish() {
-  if(mouseY>canvas.height) {
-    // backctx.drawImage(tabletop, 0, 0);
-    backctx.drawImage(plate, backcanvas.width/2-plate.width/2, backcanvas.height/2-plate.height/2);
-    middlectx.globalCompositeOperation = "source-over";
-    middlectx.drawImage(dirt, middlecanvas.width/2-dirt.width/2, middlecanvas.height/2-dirt.height/2);
-    carrying = false;
-  }
-  else {
+    // console.log("click");
+    mouseX = e.pageX - canvas.offsetLeft;
+    mouseY = e.pageY - canvas.offsetTop;
     for (var thisstack in stacks){
       if(mouseX>stacks[thisstack].x && mouseX<(stacks[thisstack].x+dishwidth)){   //if we're in the horizontal zone of a stack
-        stacks[thisstack].push(carried);
-        carrying = false;
+        if(carrying){
+          stacks[thisstack].push(carried);
+          carrying = false;
+        }
+        else{
+          carried = stacks[thisstack].pop();
+          carrying = true;
+        }
       }
     }
-  }
 }
-
-function awardStar() {
-  console.log("checking...");
-  progress = checkForBlankness(middlectx, middlecanvas);
-  console.log("There are "+progress+" dirty pixels.");
-  if (progress<=10) star.src = "gold-star.png";
-  else if (progress<=100) star.src = "silver-star.png";
-  else if (progress<=3000) star.src = "blue-star.png";
-  else star.src = "no-star.png"; 
-}
-
 
 function addDish(e) {
   stacks.stack1.push(new Dish(dishessofar, 'blue', 10, 10));

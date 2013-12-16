@@ -68,7 +68,7 @@ function init() {
 	ctx.fillRect(0,0,canvas.width, canvas.height);
 
 	addEventListener('keydown', keydown, false); //boolean is for "capturing vs bubbling"
-	addEventListener('keyup', keyup, false);
+	addEventListener('keyup', keyupDa, false);
 	player = new Player();
 
 
